@@ -21,6 +21,22 @@ The following parameters are picked up from the calling application
 
 ### Example use:  
 
+Code required in the Program.cs file before the builder.Build()  
+
+    // Set up caching.
+    var keyPrefix = builder.Configuration.GetValue<string>("DRJCache:KeyPrefix");
+    builder.Services.AddDistributedCache(opt =>
+    {
+        opt.Enabled = builder.Configuration.GetValue<bool>("DRJCache:Enabled");
+        opt.ConnectionString = builder.Configuration.GetValue<string>("DRJCache:ConnectionString") ?? string.Empty;
+        opt.KeyPrefix = $"{keyPrefix}_WebUI_";
+        opt.DefaultExpiryInMinutes = builder.Configuration.GetValue<int>("DRJCache:DefaultExpiryInMinutes");
+    });
+
+    var app = builder.Build();
+
+Calles to add/retrieve values from cache.
+
     ICacheService cacheService  
     
     var key = "ExampleKey";
