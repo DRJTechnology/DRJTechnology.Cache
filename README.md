@@ -4,6 +4,7 @@ Component to interface with Redis cache
 ## dotnetcore implementation
 Written in C#, this package provides an interface to redis cache from dotnetcore applications
 
+Available on nuget.org at: https://www.nuget.org/packages/DRJTechnology.Cache/1.0.0
 
 ### Configuration
 The following parameters are picked up from the calling application
