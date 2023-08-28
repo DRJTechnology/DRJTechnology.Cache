@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace DRJTechnology.Cache
 {
@@ -11,14 +9,13 @@ namespace DRJTechnology.Cache
             var options = new CacheOptions();
             optionsBuilder?.Invoke(options);
 
-            if (string.IsNullOrWhiteSpace(options.RedisConnectionString))
+            if (string.IsNullOrWhiteSpace(options.ConnectionString))
             {
-                throw new Exception("Redis connection string missing from configuration file.");
+                throw new Exception("Cache connection string missing from configuration file.");
             }
 
             services.AddSingleton(options);
-            services.AddStackExchangeRedisCache(option => { option.Configuration = options.RedisConnectionString; });
-            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddStackExchangeRedisCache(option => { option.Configuration = options.ConnectionString; });
             services.AddSingleton<ICacheService, CacheService>();
         }
     }

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Distributed;
+﻿using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -8,7 +7,6 @@ namespace DRJTechnology.Cache
     public class CacheService : ICacheService
     {
         private readonly IDistributedCache cache;
-        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly CacheOptions options;
         private readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
         {
@@ -16,15 +14,16 @@ namespace DRJTechnology.Cache
             ReferenceHandler = ReferenceHandler.Preserve,
         };
 
-        public CacheService(IDistributedCache cache, IHttpContextAccessor httpContextAccessor, CacheOptions cacheOptions)
+        public CacheService(IDistributedCache cache, CacheOptions cacheOptions)
         {
             this.cache = cache;
-            this.httpContextAccessor = httpContextAccessor;
             this.options = cacheOptions;
         }
 
         public async Task<T> GetAsync<T>(string key)
         {
+            if (!this.options.Enabled) { return default(T); }
+
             var cacheKey = this.GetKey(key);
             var value = await this.cache.GetStringAsync(cacheKey);
             if (value == null)
@@ -38,6 +37,8 @@ namespace DRJTechnology.Cache
 
         public async Task<(bool Success, T Value)> TryGetAsync<T>(string key)
         {
+            if (!this.options.Enabled) { return (false, default); }
+
             var cacheValue = await this.cache.GetStringAsync(this.GetKey(key));
             if (cacheValue != null)
             {
@@ -54,6 +55,8 @@ namespace DRJTechnology.Cache
 
         public async Task<T> SetAsync<T>(string key, T value, int? expiryInMinutes, bool slidingExpiration = false)
         {
+            if (!this.options.Enabled) { return value; }
+
             var cacheValue = typeof(T) == typeof(string) ? value as string
                 : JsonSerializer.Serialize(value, this.jsonSerializerOptions);
 
@@ -83,6 +86,8 @@ namespace DRJTechnology.Cache
 
         public async Task RemoveAsync(string key)
         {
+            if (!this.options.Enabled) { return; }
+
             await this.cache.RemoveAsync(this.GetKey(key));
         }
 
@@ -94,6 +99,8 @@ namespace DRJTechnology.Cache
 
         public async Task<T> GetOrCreateAsync<T>(string key, Func<T> getValue, int? expiryInMinutes, bool slidingExpiration = false)
         {
+            if (!this.options.Enabled) { return default(T); }
+
             var value = await this.cache.GetStringAsync(this.GetKey(key));
             if (value != null)
             {
@@ -105,11 +112,15 @@ namespace DRJTechnology.Cache
 
         public async Task<T> GetOrFetchAsync<T>(string key, Func<Task<T>> getValue)
         {
+            if (!this.options.Enabled) { return default(T); }
+
             return await this.GetOrFetchAsync(key, getValue, this.options.DefaultExpiryInMinutes);
         }
 
         public async Task<T> GetOrFetchAsync<T>(string key, Func<Task<T>> getValue, int? expiryInMinutes, bool slidingExpiration = false)
         {
+            if (!this.options.Enabled) { return default(T); }
+
             var value = await this.cache.GetStringAsync(this.GetKey(key));
             if (value != null)
             {
